@@ -1,86 +1,112 @@
+import controller.BookController;
+import controller.PatronController;
+import entity.Book;
+
+import java.util.List;
 import java.util.Scanner;
 
 public class Driver {
     public static void main(String[] args) {
-        Library library=new Library();
+        BookController bookController=new BookController();
+        PatronController patronController=new PatronController();
+
         try(Scanner sc=new Scanner(System.in)){
             int choice;
             do{
                 System.out.println("\n-------Library Management System---------");
-                System.out.println("\n1.Add book \n2.Add Patron \n3.Return Book \n4.Borrow Book \n5.View All Book \n6.Exit \nEnter your choice please");
+                System.out.println("""
+                        1. Add Book
+                        2. Add Patron
+                        3. Borrow Book
+                        4. Return Book
+                        5. View All Books
+                        6. View Books Borrowed by Patron
+                        7. Search Book
+                        8. Exit
+                        Enter your choice:
+                        """);
                 choice=sc.nextInt();
                 switch(choice){
                     case 1:
-                        System.out.println("Enter Book title:");
+                        System.out.println("Enter entity.Book title:");
                         String title=sc.next();
                         sc.nextLine();
                         System.out.println("Enter Author Name");
                         String author=sc.nextLine();
-                        if(library.addBook(title,author)){
-                            System.out.println("Book added successfully!!!");
-                        }else{
-                            System.out.println("‼️‼️‼️Failed to add book");
-                        }
+                        boolean bookAdded=bookController.addBook(title,author);
+                        System.out.println(bookAdded?"Book Added Successfully":"Failed to add book");
                         break;
                     case 2:
                         System.out.println("Enter Name");
                         String name=sc.next();
                         sc.nextLine();
-                        if(library.addPatron(name)){
-                            System.out.println("Patron added Successfully!!!");
-                        }else{
-                            System.out.println("‼️‼️‼️Failed to add patron.Limit reached");
-                        }
+                        boolean patronAdded=patronController.addPatron(name);
+                        System.out.println(patronAdded?"Patron added successfully":"Failed to add Patron");
                         break;
                     case 3:
-                        int patronId=getValidId("patron id",library.getPatronCount());
-                        int bookId=getValidId("book id",library.getBookCount());
-                        if(library.returnBook(patronId,bookId)){
-                            System.out.println("Book returned successfully!!!");
-                        }else{
-                            System.out.println("Return failed");
-                        }
+                        System.out.println("Enter Patron Id");
+                        int patronId=sc.nextInt();
+                        System.out.println("Enter Book Id to borrow:");
+                        int bookId=sc.nextInt();
+                        boolean borrowed=bookController.borrowBook(patronId,bookId);
+                        System.out.println(borrowed?"Book borrowed Successfully":"Borrowing failed");
                         break;
                     case 4:
-                        int patron_id=getValidId("patron id",library.getPatronCount());
-                        int  book_id=getValidId("book id", library.getBookCount());
-                        if(library.borrowBook(patron_id,book_id)){
-                            System.out.println("Borrowing success!!!");
-                        }
-                        else {
-                            System.out.println("Borrowing unsuccessfull‼️");
-                        }
+                        System.out.println("Enter Patron Id");
+                        int returnPatronId=sc.nextInt();
+                        System.out.println("Enter Book Id to be return:");
+                        int returnBookId=sc.nextInt();
+                        boolean returned=bookController.returnBook(returnPatronId,returnBookId);
+                        System.out.println(returned?"Book returned successfully":"return failed");
                         break;
                     case 5:
                         System.out.println("-----Books List-----");
-                        Book[] books=library.getBooks();
-                        for(int i=0;i<library.getBookCount();i++){
-                            Book book=books[i];
-                            System.out.println("Book "+book.getTitle() +" by "+ book.getAuthor() +" ["+(book.isAvailable()?"Available":"Borrowed") +"]");
+                        List<Book> allBooks=bookController.getAllBooks();
+                        for(Book book:allBooks){
+                            String borrowedBy= book.isAvailable()?"Available":"Borrowed by PatronId-"+book.getBorrowedBy();
+                            System.out.println(book.getId()+". "+book.getTitle()+" by "+book.getAuthor()+" ["+borrowedBy+"] ");
                         }
                         break;
                     case 6:
+                        System.out.println("Enter Patron ID:");
+                        int id=sc.nextInt();
+                        List<Book> books=bookController.getBooksByPatron(id);
+                        if(books.isEmpty()){
+                            System.out.println("No books borrowed buy this patron");
+                        }else{
+                            for(Book book:books){
+                                System.out.println(book.getId()+". "+book.getTitle()+" by "+book.getAuthor());
+                            }
+                        }
+                        break;
+                    case 7:
+                        System.out.print("Enter search term (title or author): ");
+                        String searchTerm = sc.next();
+                        sc.nextLine();
+                        List<Book> foundBooks = bookController.searchBooks(searchTerm);
+
+                        if (foundBooks.isEmpty()) {
+                            System.out.println("No books found matching the search term.");
+                        } else {
+                            System.out.println("-----Search Results-----");
+                            for (Book book : foundBooks) {
+                                String borrowedBy = book.isAvailable() ? "Available" : "Borrowed by PatronId-" + book.getBorrowedBy();
+                                System.out.println(book.getId() + ". " + book.getTitle() + " by " + book.getAuthor() + " [" + borrowedBy + "]");
+                            }
+                        }
+                        break;
+                    case 8:
                         System.out.println("Thank you for visiting,GoodBye!!!");
                         return;
                     default:
                         System.out.println("Invalid option‼️‼️‼️");
                 }
-            }while(choice!=7);
+            }while(choice!=9);
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
 
 
     }
-    static int getValidId(String label,int max){
 
-        System.out.println("Enter "+label+" (0 to "+(max-1)+"): ");
-        Scanner sc=new Scanner(System.in);
-        int id=sc.nextInt();
-        if(id<0||id>=max){
-            System.out.println("Invalid‼️");
-            return -1;
-        }
-        return id;
-    }
 }

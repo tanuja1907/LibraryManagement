@@ -38,8 +38,12 @@ public class Driver {
                         break;
                     case 2:
                         System.out.println("Enter Name");
-                        String name=sc.next();
                         sc.nextLine();
+                        String name= sc.nextLine();
+                        if(name.isEmpty()){
+                            System.out.println("Not a valid name");
+                            break;
+                        }
                         boolean patronAdded=patronController.addPatron(name);
                         System.out.println(patronAdded?"Patron added successfully":"Failed to add Patron");
                         break;

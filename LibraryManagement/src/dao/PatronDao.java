@@ -14,13 +14,21 @@ public class PatronDao {
     public boolean addPatron(Patrons patron){
         try(Connection connection= DBConnection.getConnection()){
             String query="INSERT INTO patrons(name) VALUES(?)";
-            PreparedStatement ps=connection.prepareStatement(query);
+            PreparedStatement ps=connection.prepareStatement(query,Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, patron.getName());
-            return ps.executeUpdate()>0;
+            if( ps.executeUpdate()>0){
+                ResultSet rs= ps.getGeneratedKeys();
+                if(rs.next()){
+                    int generatedKey=rs.getInt(1);
+                    patron.setId(generatedKey);
+                    System.out.println("Patron added with id: "+generatedKey);
+                }
+                return  true;
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
+        return false;
     }
 
     public Patrons getPatronByID(int patronID){
@@ -29,7 +37,7 @@ public class PatronDao {
             String query="SELECT * FROM patrons where id=?";
             PreparedStatement ps=connection.prepareStatement(query);
             ps.setInt(1,patronID);
-            ResultSet resultSet=ps.executeQuery();
+            ResultSet resultSet=ps.executeQuery(query);
             if(resultSet.next()){
                 return new Patrons(resultSet.getInt("id"),
                         resultSet.getString("name"));
